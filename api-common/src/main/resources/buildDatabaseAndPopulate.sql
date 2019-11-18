@@ -1,0 +1,33 @@
+-- /*
+-- DROP TABLE IF EXISTS accounts;
+--
+-- CREATE TABLE accounts
+-- (
+--     id              INT AUTO_INCREMENT PRIMARY KEY,
+--     account_number  VARCHAR(250) NOT NULL,
+--     forename        VARCHAR(250) NOT NULL,
+--     surname         VARCHAR(250) NOT NULL,
+--     pin             VARCHAR(250) NOT NULL,
+--     ssn             VARCHAR(9)   NOT NULL,
+--     current_balance NUMERIC(9, 2) DEFAULT NULL
+-- );
+--
+-- INSERT INTO accounts (account_number, forename, surname, pin, ssn, current_balance)
+-- VALUES ('123456789', 'Jamie', 'Higgins', '1234', '123456789', '950.50');
+--
+--
+--
+-- DROP TABLE IF EXISTS transactions;
+--
+-- CREATE TABLE transactions
+-- (
+--     id          INT AUTO_INCREMENT PRIMARY KEY,
+--     date        TIMESTAMP     NOT NULL,
+--     type        VARCHAR(250)  NOT NULL,
+--     amount      NUMERIC(9, 2) NOT NULL,
+--     description VARCHAR(250)  NOT NULL
+-- );
+--
+-- INSERT INTO transactions (date, type, amount, description)
+-- VALUES (CURRENT_TIMESTAMP, 'Deposit', '15.15', 'Pet food for my various hamsters');
+-- */

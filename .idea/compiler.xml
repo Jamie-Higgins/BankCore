@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="api-common.main" target="1.8" />
+      <module name="api-common.test" target="1.8" />
+      <module name="banking-api.main" target="1.8" />
+      <module name="banking-api.test" target="1.8" />
+      <module name="com.bankcore.apicommon.api-common.main" target="1.8" />
+      <module name="com.bankcore.apicommon.api-common.test" target="1.8" />
+      <module name="com.bankcore.bankingapi.banking-api.main" target="1.8" />
+      <module name="com.bankcore.bankingapi.banking-api.test" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>

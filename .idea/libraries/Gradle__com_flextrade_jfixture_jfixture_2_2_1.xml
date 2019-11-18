@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: com.flextrade.jfixture:jfixture:2.2.1">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.flextrade.jfixture/jfixture/2.2.1/f68998dc0551700150856e12a635b69ba8472794/jfixture-2.2.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.flextrade.jfixture/jfixture/2.2.1/6cc36353836e4141b43e4af0f53f83d8f85b63d2/jfixture-2.2.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

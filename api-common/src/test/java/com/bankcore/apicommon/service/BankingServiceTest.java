@@ -1,14 +1,24 @@
 package com.bankcore.apicommon.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.bankcore.apicommon.configuration.exception.BadRequestException;
 import com.bankcore.apicommon.configuration.mapping.Mapper;
 import com.bankcore.apicommon.dto.AccountDTO;
+import com.bankcore.apicommon.dto.CreateBankAccountDTO;
+import com.bankcore.apicommon.dto.TransactionDTO;
 import com.bankcore.apicommon.entity.Account;
+import com.bankcore.apicommon.entity.Transaction;
 import com.bankcore.apicommon.repository.AccountRepository;
 import com.bankcore.apicommon.repository.TransactionRepository;
 import com.flextrade.jfixture.JFixture;
 import com.flextrade.jfixture.rules.FixtureRule;
+import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -47,24 +57,91 @@ public class BankingServiceTest {
   }
 
   @Test
-  public void getCurrentBalance_Returns_Account_Balance() {
-    final String accountNumber = "1234-5678";
+  public void createBankAccount_Creates_New_Bank_Account(){
+    final CreateBankAccountDTO createBankAccountDTO = CreateBankAccountDTO.builder().forename("Jamie").surname("Higgins").pin("1234").ssn("123456789").build();
 
-    when(accountRepositoryMock.findFirstByAccountNumber(accountNumber)).thenReturn(accountFixture);
+    when(accountRepositoryMock.findFirstBySsn(anyString())).thenReturn(null);
+    when(mapperMock.map(any(CreateBankAccountDTO.class), any())).thenReturn(accountFixture);
+    when(mapperMock.map(any(Account.class), any())).thenReturn(accountDTOFixture);
 
-    Assert.assertEquals(classUnderTest.getCurrentBalance(accountNumber), accountFixture.getCurrentBalance());
+    Assert.assertEquals(accountDTOFixture.getAccountNumber(), classUnderTest.createBankAccount(createBankAccountDTO).getAccountNumber());
+    verify(accountRepositoryMock, times(1)).save(accountFixture);
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void createBankAccount_Does_Not_Create_New_Bank_Account_When_Account_Exists(){
+    final CreateBankAccountDTO createBankAccountDTO = CreateBankAccountDTO.builder().forename("Jamie").surname("Higgins").pin("1234").ssn("123456789").build();
+
+    when(accountRepositoryMock.findFirstBySsn(anyString())).thenReturn(accountFixture);
+
+    classUnderTest.createBankAccount(createBankAccountDTO);
   }
 
   @Test
-  public void getAccountOverview_Returns_Overview_Of_Account() {
-    final String accountNumber = "1234-5678";
+  public void closeBankAccount_Closes_Bank_Account(){
 
-    when(accountRepositoryMock.findFirstByAccountNumber(accountNumber)).thenReturn(accountFixture);
-    when(mapperMock.map(Account.class, AccountDTO.class)).thenReturn(accountDTOFixture);
-    when(mapperMock.map(AccountDTO.class, Account.class)).thenReturn(accountFixture);
+    classUnderTest.closeBankAccount(accountFixture.getAccountNumber());
 
-    Assert.assertEquals(classUnderTest.getAccountOverview(accountNumber), accountFixture);
+    verify(accountRepositoryMock, times(1)).deleteByAccountNumber(accountFixture.getAccountNumber());
+  }
+
+  @Test
+  public void depositFunds_Adds_Amount_Submitted_To_The_Accounts_Current_Balance(){
+
+    final BigDecimal valueBeforeDeposit = accountFixture.getCurrentBalance();
+    final TransactionDTO transactionDTO = TransactionDTO.builder().amount(BigDecimal.TEN).description("Test Deposit").build();
+
+    when(mapperMock.map(any(TransactionDTO.class), any())).thenReturn(Transaction.builder().amount(transactionDTO.getAmount()).description(transactionDTO.getDescription()).build());
+    when(accountRepositoryMock.findFirstByAccountNumber(accountFixture.getAccountNumber())).thenReturn(accountFixture);
+
+    classUnderTest.depositFunds(accountFixture.getAccountNumber(), transactionDTO);
+
+    Assert.assertEquals(accountFixture.getCurrentBalance().subtract(valueBeforeDeposit), BigDecimal.TEN);
+    verify(transactionRepositoryMock, times(1)).save(any(Transaction.class));
+    verify(accountRepositoryMock, times(1)).save(any(Account.class));
+  }
+
+  @Test
+  public void withdrawFunds_Subtracts_Amount_Submitted_To_The_Accounts_Current_Balance(){
+
+    final BigDecimal valueBeforeDeposit = accountFixture.getCurrentBalance();
+    final TransactionDTO transactionDTO = TransactionDTO.builder().amount(BigDecimal.TEN).description("Test Withdrawal").build();
+
+    when(mapperMock.map(any(TransactionDTO.class), any())).thenReturn(Transaction.builder().amount(transactionDTO.getAmount()).description(transactionDTO.getDescription()).build());
+    when(accountRepositoryMock.findFirstByAccountNumber(accountFixture.getAccountNumber())).thenReturn(accountFixture);
+
+    classUnderTest.withdrawFunds(accountFixture.getAccountNumber(), transactionDTO);
+
+    Assert.assertEquals(valueBeforeDeposit.subtract(accountFixture.getCurrentBalance()), BigDecimal.TEN);
+    verify(transactionRepositoryMock, times(1)).save(any(Transaction.class));
+    verify(accountRepositoryMock, times(1)).save(any(Account.class));
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void withdrawFunds_Does_Not_Subtract_Amount_Submitted_To_The_Accounts_Current_Balance_When_Withdrawal_Amount_Is_Greater_Than_Current_Balance(){
+    accountFixture.setCurrentBalance(BigDecimal.ONE);
+    final TransactionDTO transactionDTO = TransactionDTO.builder().amount(BigDecimal.TEN).description("Test Withdrawal").build();
+
+    when(accountRepositoryMock.findFirstByAccountNumber(accountFixture.getAccountNumber())).thenReturn(accountFixture);
+
+    classUnderTest.withdrawFunds(accountFixture.getAccountNumber(), transactionDTO);
+  }
+
+  @Test
+  public void getAccountOverview_Returns_Account_Overview_With_Latest_Transactions_Showing_Only_Latest_Five_Transactions() {
+    when(accountRepositoryMock.findFirstByAccountNumber(accountFixture.getAccountNumber())).thenReturn(accountFixture);
+    when(mapperMock.map(any(Account.class), any())).thenReturn(accountDTOFixture);
+
+    final AccountDTO accountDTO = classUnderTest.getAccountOverview(accountFixture.getAccountNumber());
+
+    Assert.assertTrue(accountDTO.getLastFiveTransactions().size() <= 5);
   }
 
 
+  @Test
+  public void getCurrentBalance_Returns_Account_Balance() {
+    when(accountRepositoryMock.findFirstByAccountNumber(accountFixture.getAccountNumber())).thenReturn(accountFixture);
+
+    Assert.assertEquals(classUnderTest.getCurrentBalance(accountFixture.getAccountNumber()), accountFixture.getCurrentBalance());
+  }
 }

@@ -10,7 +10,7 @@ public enum TransactionType {
   DEPOSIT(1, "Deposit"),
   WITHDRAWAL(2, "Withdrawal"),
   DEBIT(3, "Debit"),
-  CHECKS(4, "Checks");
+  CHECK(4, "Check");
 
   private final int id;
   private final String description;

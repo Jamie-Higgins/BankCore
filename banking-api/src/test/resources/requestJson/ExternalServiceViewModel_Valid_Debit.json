@@ -1,0 +1,6 @@
+{
+  "accountNumber": "1234",
+  "amount": 30,
+  "type": "DEBIT",
+  "description": "Phone Bill"
+}

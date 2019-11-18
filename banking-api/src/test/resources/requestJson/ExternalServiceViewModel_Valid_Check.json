@@ -1,0 +1,6 @@
+{
+  "accountNumber": "1234",
+  "amount": 500,
+  "type": "CHECK",
+  "description": "Salary"
+}

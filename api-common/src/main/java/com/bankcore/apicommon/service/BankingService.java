@@ -4,6 +4,7 @@ import com.bankcore.apicommon.configuration.exception.BadRequestException;
 import com.bankcore.apicommon.configuration.mapping.Mapper;
 import com.bankcore.apicommon.dto.AccountDTO;
 import com.bankcore.apicommon.dto.CreateBankAccountDTO;
+import com.bankcore.apicommon.dto.ExternalServiceDTO;
 import com.bankcore.apicommon.dto.TransactionDTO;
 import com.bankcore.apicommon.entity.Account;
 import com.bankcore.apicommon.entity.Transaction;
@@ -28,7 +29,7 @@ public class BankingService {
   private final AccountRepository accountRepository;
   private final TransactionRepository transactionRepository;
 
-  @Transactional(isolation= Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
+  @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
   public AccountDTO createBankAccount(final CreateBankAccountDTO createBankAccountDTO) {
 
     if (accountRepository.findFirstBySsn(createBankAccountDTO.getSsn()) != null) {
@@ -43,12 +44,12 @@ public class BankingService {
     }
   }
 
-  @Transactional(isolation= Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
+  @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
   public void closeBankAccount(final String accountNumber) {
     accountRepository.deleteByAccountNumber(accountNumber);
   }
 
-  @Transactional(isolation= Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
+  @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
   public void depositFunds(final String accountNumber, final TransactionDTO transactionDTO) {
     final Account account = accountRepository.findFirstByAccountNumber(accountNumber);
     account.setCurrentBalance(account.getCurrentBalance().add(transactionDTO.getAmount()));
@@ -57,7 +58,7 @@ public class BankingService {
     accountRepository.save(account);
   }
 
-  @Transactional(isolation= Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
+  @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
   public void withdrawFunds(final String accountNumber, final TransactionDTO transactionDTO) {
     final Account account = accountRepository.findFirstByAccountNumber(accountNumber);
     if (transactionDTO.getAmount().compareTo(account.getCurrentBalance()) == 1) {
@@ -70,12 +71,12 @@ public class BankingService {
     }
   }
 
-  @Transactional(isolation= Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
+  @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
   public BigDecimal getCurrentBalance(final String accountNumber) {
     return accountRepository.findFirstByAccountNumber(accountNumber).getCurrentBalance();
   }
 
-  @Transactional(isolation= Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
+  @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
   public AccountDTO getAccountOverview(final String accountNumber) {
     final AccountDTO accountDTO = mapper.map(accountRepository.findFirstByAccountNumber(accountNumber), AccountDTO.class);
 
@@ -84,11 +85,18 @@ public class BankingService {
     return accountDTO;
   }
 
+  @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
+  public String processExternalServices(final ExternalServiceDTO externalServiceDTO) {
 
-  @Transactional(isolation= Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
-  public void processExternalDebitsAndChecks(final String accountNumber) {
-    //TODO External services
+    if (externalServiceDTO.getType().equals(TransactionType.DEBIT.toString())) {
+      return processDebitTransaction(externalServiceDTO);
+    } else if (externalServiceDTO.getType().equals(TransactionType.CHECK.toString())) {
+      return processCheckTransaction(externalServiceDTO);
+    } else {
+      throw new BadRequestException("Invalid Transaction Type"); //TODO Refactor?
+    }
   }
+
 
   private Transaction buildTransaction(final TransactionDTO transactionDTO, final Account account, final TransactionType transactionType) {
     final Transaction transaction = mapper.map(transactionDTO, Transaction.class);
@@ -100,11 +108,34 @@ public class BankingService {
     return transaction;
   }
 
-  private void trimListTo5MostRecentTransactions(AccountDTO accountDTO) {
+  private void trimListTo5MostRecentTransactions(final AccountDTO accountDTO) {
     accountDTO.getLastFiveTransactions().sort(Comparator.comparing(TransactionDTO::getDate));
-    if(accountDTO.getLastFiveTransactions().size() >= 5) {
+    if (accountDTO.getLastFiveTransactions().size() >= 5) {
       accountDTO.setLastFiveTransactions(accountDTO.getLastFiveTransactions().subList(0, 5));
     }
   }
 
+  private String processCheckTransaction(final ExternalServiceDTO externalServiceDTO) {
+    final Account account = accountRepository.findFirstByAccountNumber(externalServiceDTO.getAccountNumber());
+    account.setCurrentBalance(account.getCurrentBalance().add(externalServiceDTO.getAmount()));
+
+    return saveExternalTransaction(externalServiceDTO, account, TransactionType.CHECK);
+  }
+
+  private String processDebitTransaction(final ExternalServiceDTO externalServiceDTO) {
+    final Account account = accountRepository.findFirstByAccountNumber(externalServiceDTO.getAccountNumber());
+    if (externalServiceDTO.getAmount().compareTo(account.getCurrentBalance()) == 1) {
+      throw new BadRequestException("Insufficient Funds Available");
+    } else {
+      account.setCurrentBalance(account.getCurrentBalance().subtract(externalServiceDTO.getAmount()));
+    }
+    return saveExternalTransaction(externalServiceDTO, account, TransactionType.DEBIT);
+  }
+
+  private String saveExternalTransaction(final ExternalServiceDTO externalServiceDTO, final Account account, final TransactionType transactionType) {
+    final Transaction transaction = buildTransaction(mapper.map(externalServiceDTO, TransactionDTO.class), account, transactionType);
+    transactionRepository.save(transaction);
+    accountRepository.save(account);
+    return transaction.getTransactionId();
+  }
 }

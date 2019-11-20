@@ -15,6 +15,8 @@ import lombok.Setter;
 @AllArgsConstructor
 public class AccountDTO {
 
+  private int id;
+
   private String accountNumber;
 
   private String forename;

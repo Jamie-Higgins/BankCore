@@ -60,8 +60,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-activemq'
 
     // Security
-//    implementation 'org.springframework.boot:spring-boot-starter-security'
-/*    compile group: 'io.jsonwebtoken', name: 'jjwt', version: '0.9.0'*/
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    compile group: 'io.jsonwebtoken', name: 'jjwt', version: '0.9.0'
 
 //    compile 'com.bankcore.apicommon:api-common:0.0.1'
 

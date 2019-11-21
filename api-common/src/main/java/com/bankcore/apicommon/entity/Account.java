@@ -1,5 +1,6 @@
 package com.bankcore.apicommon.entity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +12,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -54,7 +56,9 @@ public class Account {
   private BigDecimal currentBalance;
 
   @Builder.Default
+  @Transient
+  @JsonInclude()
   @OneToMany(fetch = FetchType.EAGER, mappedBy = "account", cascade = CascadeType.ALL)
-  private List<Transaction> lastFiveTransactions = new ArrayList<>();
+  private final List<Transaction> lastFiveTransactions = new ArrayList<>();
 
 }

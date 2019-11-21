@@ -13,7 +13,8 @@ import com.bankcore.apicommon.repository.AccountRepository;
 import com.bankcore.apicommon.repository.TransactionRepository;
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
-import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -42,12 +43,13 @@ public class BankingService {
 
   @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
   public void closeBankAccount(final String accountNumber) {
+    transactionRepository.deleteAllByAccount_AccountNumber(accountNumber);
     accountRepository.deleteByAccountNumber(accountNumber);
   }
 
   @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
   public void depositFunds(final String accountNumber, final TransactionDTO transactionDTO) {
-    final Account account = accountRepository.findFirstByAccountNumber(accountNumber);
+    final Account account = accountRepository.findByAccountNumber(accountNumber).get();
     account.setCurrentBalance(account.getCurrentBalance().add(transactionDTO.getAmount()));
 
     transactionRepository.save(buildTransaction(transactionDTO, account, TransactionType.DEPOSIT));
@@ -56,7 +58,7 @@ public class BankingService {
 
   @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
   public void withdrawFunds(final String accountNumber, final TransactionDTO transactionDTO) {
-    final Account account = accountRepository.findFirstByAccountNumber(accountNumber);
+    final Account account = accountRepository.findByAccountNumber(accountNumber).get();
     if (transactionDTO.getAmount().compareTo(account.getCurrentBalance()) == 1) {
       throw new BadRequestException("Insufficient Funds Available");
     } else {
@@ -69,14 +71,17 @@ public class BankingService {
 
   @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
   public BigDecimal getCurrentBalance(final String accountNumber) {
-    return accountRepository.findFirstByAccountNumber(accountNumber).getCurrentBalance();
+    return accountRepository.findByAccountNumber(accountNumber).get().getCurrentBalance();
   }
 
   @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
   public AccountDTO getAccountOverview(final String accountNumber) {
-    final AccountDTO accountDTO = mapper.map(accountRepository.findFirstByAccountNumber(accountNumber), AccountDTO.class);
+    final AccountDTO accountDTO = mapper.map(accountRepository.findByAccountNumber(accountNumber).get(), AccountDTO.class);
 
-    trimListTo5MostRecentTransactions(accountDTO); //TODO do this in DB to reduce unncessary data returned
+    final Optional<List<Transaction>> lastFiveTransactions = transactionRepository.findTop5ByAccountIdOrderByDateDesc(accountDTO.getId());
+    if (lastFiveTransactions.isPresent()) {
+      accountDTO.setLastFiveTransactions(mapper.map(lastFiveTransactions.get(), TransactionDTO.class));
+    }
 
     return accountDTO;
   }
@@ -93,10 +98,9 @@ public class BankingService {
     }
   }
 
-
   private Transaction buildTransaction(final TransactionDTO transactionDTO, final Account account, final TransactionType transactionType) {
     final Transaction transaction = mapper.map(transactionDTO, Transaction.class);
-    transaction.setDate(ZonedDateTime.now()); //TODO Move to mapper
+    transaction.setDate(ZonedDateTime.now());
     transaction.setType(transactionType.toString());
     transaction.setTransactionId(UUID.randomUUID().toString());
     transaction.setAccount(account);
@@ -104,22 +108,15 @@ public class BankingService {
     return transaction;
   }
 
-  private void trimListTo5MostRecentTransactions(final AccountDTO accountDTO) { //TODO Do in DB
-    accountDTO.getLastFiveTransactions().sort(Comparator.comparing(TransactionDTO::getDate));
-    if (accountDTO.getLastFiveTransactions().size() >= 5) {
-      accountDTO.setLastFiveTransactions(accountDTO.getLastFiveTransactions().subList(0, 5));
-    }
-  }
-
   private String processCheckTransaction(final ExternalServiceDTO externalServiceDTO) {
-    final Account account = accountRepository.findFirstByAccountNumber(externalServiceDTO.getAccountNumber());
+    final Account account = accountRepository.findByAccountNumber(externalServiceDTO.getAccountNumber()).get();
     account.setCurrentBalance(account.getCurrentBalance().add(externalServiceDTO.getAmount()));
 
     return saveExternalTransaction(externalServiceDTO, account, TransactionType.CHECK);
   }
 
   private String processDebitTransaction(final ExternalServiceDTO externalServiceDTO) {
-    final Account account = accountRepository.findFirstByAccountNumber(externalServiceDTO.getAccountNumber());
+    final Account account = accountRepository.findByAccountNumber(externalServiceDTO.getAccountNumber()).get();
     if (externalServiceDTO.getAmount().compareTo(account.getCurrentBalance()) == 1) {
       throw new BadRequestException("Insufficient Funds Available");
     } else {

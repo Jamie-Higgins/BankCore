@@ -19,6 +19,7 @@ import com.bankcore.apicommon.repository.TransactionRepository;
 import com.flextrade.jfixture.JFixture;
 import com.flextrade.jfixture.rules.FixtureRule;
 import java.math.BigDecimal;
+import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -81,7 +82,7 @@ public class BankingServiceTest {
     final TransactionDTO transactionDTO = TransactionDTO.builder().amount(BigDecimal.TEN).description("Test Deposit").build();
 
     when(mapperMock.map(any(TransactionDTO.class), any())).thenReturn(Transaction.builder().amount(transactionDTO.getAmount()).description(transactionDTO.getDescription()).build());
-    when(accountRepositoryMock.findFirstByAccountNumber(accountFixture.getAccountNumber())).thenReturn(accountFixture);
+    when(accountRepositoryMock.findByAccountNumber(accountFixture.getAccountNumber())).thenReturn(Optional.of(accountFixture));
 
     classUnderTest.depositFunds(accountFixture.getAccountNumber(), transactionDTO);
 
@@ -93,11 +94,12 @@ public class BankingServiceTest {
   @Test
   public void withdrawFunds_Subtracts_Amount_Submitted_To_The_Accounts_Current_Balance() {
 
+    accountFixture.setCurrentBalance(BigDecimal.valueOf(100));
     final BigDecimal valueBeforeDeposit = accountFixture.getCurrentBalance();
     final TransactionDTO transactionDTO = TransactionDTO.builder().amount(BigDecimal.TEN).description("Test Withdrawal").build();
 
     when(mapperMock.map(any(TransactionDTO.class), any())).thenReturn(Transaction.builder().amount(transactionDTO.getAmount()).description(transactionDTO.getDescription()).build());
-    when(accountRepositoryMock.findFirstByAccountNumber(accountFixture.getAccountNumber())).thenReturn(accountFixture);
+    when(accountRepositoryMock.findByAccountNumber(accountFixture.getAccountNumber())).thenReturn(Optional.of(accountFixture));
 
     classUnderTest.withdrawFunds(accountFixture.getAccountNumber(), transactionDTO);
 
@@ -111,14 +113,14 @@ public class BankingServiceTest {
     accountFixture.setCurrentBalance(BigDecimal.ONE);
     final TransactionDTO transactionDTO = TransactionDTO.builder().amount(BigDecimal.TEN).description("Test Withdrawal").build();
 
-    when(accountRepositoryMock.findFirstByAccountNumber(accountFixture.getAccountNumber())).thenReturn(accountFixture);
+    when(accountRepositoryMock.findByAccountNumber(accountFixture.getAccountNumber())).thenReturn(Optional.of(accountFixture));
 
     classUnderTest.withdrawFunds(accountFixture.getAccountNumber(), transactionDTO);
   }
 
   @Test
   public void getAccountOverview_Returns_Account_Overview_With_Latest_Transactions_Showing_Only_Latest_Five_Transactions() {
-    when(accountRepositoryMock.findFirstByAccountNumber(accountFixture.getAccountNumber())).thenReturn(accountFixture);
+    when(accountRepositoryMock.findByAccountNumber(accountFixture.getAccountNumber())).thenReturn(Optional.of(accountFixture));
     when(mapperMock.map(any(Account.class), any())).thenReturn(accountDTOFixture);
 
     final AccountDTO accountDTO = classUnderTest.getAccountOverview(accountFixture.getAccountNumber());
@@ -128,7 +130,7 @@ public class BankingServiceTest {
 
   @Test
   public void getCurrentBalance_Returns_Account_Balance() {
-    when(accountRepositoryMock.findFirstByAccountNumber(accountFixture.getAccountNumber())).thenReturn(accountFixture);
+    when(accountRepositoryMock.findByAccountNumber(accountFixture.getAccountNumber())).thenReturn(Optional.of(accountFixture));
 
     Assert.assertEquals(classUnderTest.getCurrentBalance(accountFixture.getAccountNumber()), accountFixture.getCurrentBalance());
   }
@@ -144,7 +146,7 @@ public class BankingServiceTest {
         .description("Phone Bill")
         .build();
 
-    when(accountRepositoryMock.findFirstByAccountNumber(externalServiceDTO.getAccountNumber())).thenReturn(accountFixture);
+    when(accountRepositoryMock.findByAccountNumber(externalServiceDTO.getAccountNumber())).thenReturn(Optional.of(accountFixture));
     when(mapperMock.map(any(ExternalServiceDTO.class), any()))
         .thenReturn(TransactionDTO.builder()
             .amount(externalServiceDTO.getAmount())
@@ -176,7 +178,7 @@ public class BankingServiceTest {
         .description("Phone Bill")
         .build();
 
-    when(accountRepositoryMock.findFirstByAccountNumber(externalServiceDTO.getAccountNumber())).thenReturn(accountFixture);
+    when(accountRepositoryMock.findByAccountNumber(externalServiceDTO.getAccountNumber())).thenReturn(Optional.of(accountFixture));
 
     classUnderTest.processExternalServices(externalServiceDTO);
   }
@@ -192,7 +194,7 @@ public class BankingServiceTest {
         .description("Phone Bill")
         .build();
 
-    when(accountRepositoryMock.findFirstByAccountNumber(externalServiceDTO.getAccountNumber())).thenReturn(accountFixture);
+    when(accountRepositoryMock.findByAccountNumber(externalServiceDTO.getAccountNumber())).thenReturn(Optional.of(accountFixture));
     when(mapperMock.map(any(ExternalServiceDTO.class), any()))
         .thenReturn(TransactionDTO.builder()
             .amount(externalServiceDTO.getAmount())

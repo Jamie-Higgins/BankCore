@@ -2,11 +2,11 @@ package com.bankingapi.controllers;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.bankcore.apicommon.configuration.mapping.Mapper;
+import com.bankcore.apicommon.configuration.security.jwt.JwtPrincipalViewModel;
 import com.bankcore.apicommon.service.BankingService;
 import com.bankingapi.utils.ResourceUtility;
 import org.junit.Before;
@@ -34,29 +34,22 @@ public class AccountControllerTest {
   private Mapper mapperMock;
   @Mock
   private BankingService bankingServiceMock;
-    /*  @Mock
-    private JwtPrincipalViewModel jwtPrincipalViewModelMock;*/
+  @Mock
+  private JwtPrincipalViewModel jwtPrincipalViewModelMock;
+
 
   private MockMvc mockMvc;
 
   @Before
   public void setup() {
     mockMvc = MockMvcBuilders.standaloneSetup(
-        new AccountController(mapperMock, bankingServiceMock))
+        new AccountController(mapperMock, bankingServiceMock, jwtPrincipalViewModelMock))
         .build();
   }
 
   @Test
-  public void createBankAccount_Returns_Created() throws Exception {
-    mockMvc.perform(post("/account/")
-        .content(CREATE_BANK_ACCOUNT_VIEW_MODEL_VALID_JSON)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isCreated());
-  }
-
-  @Test
   public void closeBankAccount_Returns_OK() throws Exception {
-    mockMvc.perform(delete("/account/1234")
+    mockMvc.perform(delete("/account/")
         .content(CREATE_BANK_ACCOUNT_VIEW_MODEL_VALID_JSON)
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
@@ -64,7 +57,7 @@ public class AccountControllerTest {
 
   @Test
   public void depositFunds_Returns_OK() throws Exception {
-    mockMvc.perform(put("/account/deposit/1234")
+    mockMvc.perform(put("/account/deposit/")
         .content(DEPOSIT_TRANSACTION_VIEW_MODEL_VALID)
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
@@ -72,7 +65,7 @@ public class AccountControllerTest {
 
   @Test
   public void withdrawFunds_Returns_OK() throws Exception {
-    mockMvc.perform(put("/account/withdraw/1234")
+    mockMvc.perform(put("/account/withdraw/")
         .content(WITHDRAW_TRANSACTION_VIEW_MODEL_VALID)
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
@@ -80,7 +73,7 @@ public class AccountControllerTest {
 
   @Test
   public void getCurrentBalance_Returns_OK() throws Exception {
-    mockMvc.perform(get("/account/1234")
+    mockMvc.perform(get("/account/currentBalance")
         .content(WITHDRAW_TRANSACTION_VIEW_MODEL_VALID)
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
@@ -88,7 +81,7 @@ public class AccountControllerTest {
 
   @Test
   public void getAccountOverview_Returns_OK() throws Exception {
-    mockMvc.perform(get("/account/overview/1234")
+    mockMvc.perform(get("/account/overview/")
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
   }

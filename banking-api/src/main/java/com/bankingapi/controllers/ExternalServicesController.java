@@ -22,7 +22,6 @@ public class ExternalServicesController {
 
   private final Mapper mapper;
   private final BankingService bankingService;
-  //private final JwtPrincipalViewModel jwtPrincipalViewModel; //TODO Replace pathable variables with JWT
 
   @ApiOperation(value = "External Debit processing")
   @PutMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)

@@ -11,8 +11,6 @@ public interface AccountRepository extends JpaRepository<Account, Integer>, JpaS
 
   Optional<Account> findByAccountNumber(final String accountNumber);
 
-  Account findFirstByAccountNumber(final String accountNumber);
-
   void deleteByAccountNumber(final String accountNumber);
 
 }

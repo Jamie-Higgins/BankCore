@@ -43,7 +43,6 @@ public class Account {
   @Column(name = "surname", nullable = false)
   private String surname;
 
-  @Size(min = 4, max = 4)
   @Column(name = "pin", nullable = false)
   private String pin;
 
@@ -55,7 +54,7 @@ public class Account {
   private BigDecimal currentBalance;
 
   @Builder.Default
-  @OneToMany(mappedBy = "account", cascade = CascadeType.DETACH, fetch = FetchType.LAZY)
+  @OneToMany(fetch = FetchType.EAGER, mappedBy = "account", cascade = CascadeType.ALL)
   private List<Transaction> lastFiveTransactions = new ArrayList<>();
 
 }

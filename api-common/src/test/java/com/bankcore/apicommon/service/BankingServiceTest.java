@@ -1,7 +1,6 @@
 package com.bankcore.apicommon.service;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -61,21 +60,10 @@ public class BankingServiceTest {
   public void createBankAccount_Creates_New_Bank_Account() {
     final CreateBankAccountDTO createBankAccountDTO = CreateBankAccountDTO.builder().forename("Jamie").surname("Higgins").pin("1234").ssn("123456789").build();
 
-    when(accountRepositoryMock.findFirstBySsn(anyString())).thenReturn(null);
     when(mapperMock.map(any(CreateBankAccountDTO.class), any())).thenReturn(accountFixture);
-    when(mapperMock.map(any(Account.class), any())).thenReturn(accountDTOFixture);
 
-    Assert.assertEquals(accountDTOFixture.getAccountNumber(), classUnderTest.createBankAccount(createBankAccountDTO).getAccountNumber());
+    Assert.assertNotNull(classUnderTest.createBankAccount(createBankAccountDTO));
     verify(accountRepositoryMock, times(1)).save(accountFixture);
-  }
-
-  @Test(expected = BadRequestException.class)
-  public void createBankAccount_Does_Not_Create_New_Bank_Account_When_Account_Exists() {
-    final CreateBankAccountDTO createBankAccountDTO = CreateBankAccountDTO.builder().forename("Jamie").surname("Higgins").pin("1234").ssn("123456789").build();
-
-    when(accountRepositoryMock.findFirstBySsn(anyString())).thenReturn(accountFixture);
-
-    classUnderTest.createBankAccount(createBankAccountDTO);
   }
 
   @Test

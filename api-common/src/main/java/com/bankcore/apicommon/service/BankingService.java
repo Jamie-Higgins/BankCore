@@ -30,18 +30,14 @@ public class BankingService {
   private final TransactionRepository transactionRepository;
 
   @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
-  public AccountDTO createBankAccount(final CreateBankAccountDTO createBankAccountDTO) {
+  public String createBankAccount(final CreateBankAccountDTO createBankAccountDTO) {
 
-    if (accountRepository.findFirstBySsn(createBankAccountDTO.getSsn()) != null) {
-      throw new BadRequestException("Invalid Credentials");
-    } else {
-      final Account newAccount = mapper.map(createBankAccountDTO, Account.class);
-      newAccount.setCurrentBalance(BigDecimal.ZERO);
-      newAccount.setAccountNumber(UUID.randomUUID().toString());
-      accountRepository.save(newAccount);
+    final Account newAccount = mapper.map(createBankAccountDTO, Account.class);
+    newAccount.setCurrentBalance(BigDecimal.ZERO);
+    newAccount.setAccountNumber(UUID.randomUUID().toString());
+    accountRepository.save(newAccount);
 
-      return mapper.map(newAccount, AccountDTO.class);
-    }
+    return newAccount.getAccountNumber();
   }
 
   @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
@@ -93,7 +89,7 @@ public class BankingService {
     } else if (externalServiceDTO.getType().equals(TransactionType.CHECK.toString())) {
       return processCheckTransaction(externalServiceDTO);
     } else {
-      throw new BadRequestException("Invalid Transaction Type"); //TODO Refactor?
+      throw new BadRequestException("Invalid Transaction Type");
     }
   }
 
@@ -108,7 +104,7 @@ public class BankingService {
     return transaction;
   }
 
-  private void trimListTo5MostRecentTransactions(final AccountDTO accountDTO) {
+  private void trimListTo5MostRecentTransactions(final AccountDTO accountDTO) { //TODO Do in DB
     accountDTO.getLastFiveTransactions().sort(Comparator.comparing(TransactionDTO::getDate));
     if (accountDTO.getLastFiveTransactions().size() >= 5) {
       accountDTO.setLastFiveTransactions(accountDTO.getLastFiveTransactions().subList(0, 5));

@@ -22,7 +22,7 @@ The project will now be running on http://localhost:8080/
 ##
 ###Using the Application
 
-Swagger docs and endpoints can be found at the following link - you will need to authenticate yourself with a bearer token so I used postman for this.
+Swagger docs and endpoints can be found at the following link - you will need to authenticate with a JWT Bearer token  I used postman for this.
 http://localhost:8080/swagger-ui.html
 
 To Register see the following endpoint which will return an account number:

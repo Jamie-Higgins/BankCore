@@ -11,6 +11,7 @@ COPY ./banking-api/build.gradle ./banking-api/settings.gradle ./banking-api/
 COPY ./api-common/src ./api-common/src/
 COPY ./banking-api/src  ./banking-api/src
 
+RUN mkdir -p ./banking-api/build/libs
 RUN gradle assemble -p=./api-common && cp ./api-common/build/libs/*.jar ./banking-api/build/libs
 RUN gradle assemble -p=./banking-api
 

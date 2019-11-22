@@ -7,7 +7,7 @@ In the root of the project with the Dockerfile build docker:
 
 Next run docker:
 
-`docker run --rm -p 8080:8080 g2/bankingap` Replace the left most 8080 with your desired port if 8080 is in use on your machine.
+`docker run --rm -p 8080:8080 g2/bankingapp` Replace the left most 8080 with your desired port if 8080 is in use on your machine.
 ##
 ###Through IDE
 
